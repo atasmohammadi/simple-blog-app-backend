@@ -16,5 +16,14 @@
     "date": "2024-02-14T12:00:00Z",
     "likes": 0,
     "dislikes": 0
+  },
+  {
+    "id": 3,
+    "author": "ata",
+    "title": "Title 1",
+    "text": "text from Ata",
+    "date": "2024-02-13T09:41:34.028Z",
+    "likes": 0,
+    "dislikes": 0
   }
 ]

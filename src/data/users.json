@@ -10,5 +10,11 @@
     "username": "user2",
     "email": "user2@example.com",
     "password": "$2b$10$K1N9.IxM5prBrZC0CrV6ueJZK/5gH/9r0QDOmK6QW.5x9O5vWvx6e"
+  },
+  {
+    "id": 3,
+    "username": "ata",
+    "email": "atasmohammadi@gmail.com",
+    "password": "$2b$10$gJgG0TeS0CGiQS56QnRtiOJfY0.zbmY6K6htvN5fHcKZSDfC/HC0u"
   }
 ]

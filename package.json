@@ -4,6 +4,7 @@
   "description": "A simple blog backend built with Node.js, Express, and TypeScript",
   "main": "build/index.js",
   "scripts": {
+    "prestart": "yarn build",
     "start": "node build/index.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"

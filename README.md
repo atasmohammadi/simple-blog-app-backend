@@ -28,7 +28,7 @@ The Simple Blog App Backend is a Node.js and Express application designed to ser
    ```
 3. Run the application:
    ```sh
-   yarn start
+   yarn dev
    ```
 
 ### Using Swagger UI
