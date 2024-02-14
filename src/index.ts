@@ -16,6 +16,7 @@ app.use(
   cors({
     origin: "*",
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(bodyParser.json());
