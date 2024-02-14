@@ -16,5 +16,11 @@
     "username": "ata",
     "email": "atasmohammadi@gmail.com",
     "password": "$2b$10$gJgG0TeS0CGiQS56QnRtiOJfY0.zbmY6K6htvN5fHcKZSDfC/HC0u"
+  },
+  {
+    "id": 4,
+    "username": "milo",
+    "email": "milo@gmail.com",
+    "password": "$2b$10$FJjO3xOUxiW6qSZiHz5tAejFENA793jbSW/UUQ5fgU/Lgdxwumjge"
   }
 ]

@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
 import * as swaggerUi from "swagger-ui-express";
 import * as swaggerDocument from "./swagger.json";
@@ -10,6 +11,8 @@ import { userRoutes } from "./controllers/userController";
 const app = express();
 const PORT = 3000;
 
+// Enable CORS for all requests
+app.use(cors());
 app.use(bodyParser.json());
 
 // Define routes
