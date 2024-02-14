@@ -12,13 +12,14 @@ const app = express();
 const PORT = 3000;
 
 // Enable CORS for all requests
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin: "*", // Allow all origins
+  credentials: true, // Allow credentials
+  allowedHeaders: "*", // Allow any headers
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Optional: Specify allowed methods
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Define routes
