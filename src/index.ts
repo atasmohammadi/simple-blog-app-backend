@@ -12,7 +12,12 @@ const app = express();
 const PORT = 3000;
 
 // Enable CORS for all requests
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 
 // Define routes
