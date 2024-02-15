@@ -1,18 +1,1 @@
-[
-  {
-    "id": 1,
-    "postId": 1,
-    "text": "This is a comment on the first post.",
-    "date": "2024-02-13T13:00:00Z",
-    "likes": 0,
-    "dislikes": 0
-  },
-  {
-    "id": 2,
-    "postId": 2,
-    "text": "This is a comment on the second post.",
-    "date": "2024-02-14T13:00:00Z",
-    "likes": 0,
-    "dislikes": 0
-  }
-]
+[]
