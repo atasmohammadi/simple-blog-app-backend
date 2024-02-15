@@ -29,3 +29,7 @@ Thumbs.db
 
 # Optional: Yarn error logs
 .yarn-error.log
+
+data/comments.json
+data/posts.json
+data/users.json
