@@ -2,10 +2,10 @@
 node_modules/
 
 # Compiled JavaScript output
-# public/
+# dist/
 
 # Environment files
-# .env
+.env
 
 # Logs
 *.log
