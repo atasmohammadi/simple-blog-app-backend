@@ -20,8 +20,9 @@ export const authMiddleware = (
 
   try {
     // Verify the token
-    const decoded = jwt.verify(token, SECRET_KEY);
+    const decoded = jwt.verify(token, SECRET_KEY) as jwt.JwtPayload;
     // Add the user's ID to the request if needed
+
     req.user = { id: decoded.id };
     next();
   } catch (error) {
