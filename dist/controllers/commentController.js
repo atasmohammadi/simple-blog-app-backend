@@ -44,70 +44,100 @@ var express_1 = __importDefault(require("express"));
 var database_1 = require("../models/database");
 var authMiddleware_1 = require("../middleware/authMiddleware");
 var router = express_1.default.Router();
+// Ensure comments collection exists before using it
+function ensureCommentsCollection() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!!database_1.db.collection("comments")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, database_1.db.createCollection("comments")];
+                case 1:
+                    _a.sent(); // Create collection if it doesn't exist
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    });
+}
+(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, ensureCommentsCollection()];
+            case 1:
+                _a.sent(); // Call on startup
+                return [2 /*return*/];
+        }
+    });
+}); })();
 // Get comments for a post
 router.get("/:postId", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var postId, comments, postComments;
+    var postId, comments;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 postId = parseInt(req.params.postId);
-                return [4 /*yield*/, database_1.db.readDbFile("comments.json")];
+                return [4 /*yield*/, database_1.db.collection("comments").find({ postId: postId }).toArray()];
             case 1:
                 comments = _a.sent();
-                postComments = comments.filter(function (comment) { return comment.postId === postId; });
-                res.json(postComments);
+                res.json(comments);
                 return [2 /*return*/];
         }
     });
 }); });
 // Create a comment
 router.post("/", authMiddleware_1.authMiddleware, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, postId, text, comments, newComment;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var _a, postId, text, newComment, error_1;
+    var _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 _a = req.body, postId = _a.postId, text = _a.text;
                 if (!postId || !text) {
                     return [2 /*return*/, res.status(400).send({ message: "Post ID and text are required." })];
                 }
-                return [4 /*yield*/, database_1.db.readDbFile("comments.json")];
+                _b = {};
+                return [4 /*yield*/, database_1.db.collection("comments").countDocuments({})];
             case 1:
-                comments = _b.sent();
-                newComment = {
-                    id: comments.length + 1,
-                    postId: postId,
-                    text: text,
-                    date: new Date().toISOString(),
-                    likes: 0,
-                    dislikes: 0,
-                };
-                comments.push(newComment);
-                return [4 /*yield*/, database_1.db.writeDbFile("comments.json", comments)];
+                newComment = (_b.id = (_c.sent()) + 1,
+                    _b.postId = postId,
+                    _b.text = text,
+                    _b.date = new Date().toISOString(),
+                    _b.likes = 0,
+                    _b.dislikes = 0,
+                    _b);
+                _c.label = 2;
             case 2:
-                _b.sent();
+                _c.trys.push([2, 4, , 5]);
+                return [4 /*yield*/, database_1.db.collection("comments").insertOne(newComment)];
+            case 3:
+                _c.sent(); // Use MongoDB insertOne
                 res.json(newComment);
-                return [2 /*return*/];
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _c.sent();
+                console.error("Error creating comment:", error_1);
+                res.status(500).send({ message: "Internal server error." });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
     });
 }); });
 // Delete a comment
 router.delete("/:id", authMiddleware_1.authMiddleware, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var commentId, comments, commentIndex;
+    var commentId, deleteResult;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 commentId = parseInt(req.params.id);
-                return [4 /*yield*/, database_1.db.readDbFile("comments.json")];
+                return [4 /*yield*/, database_1.db
+                        .collection("comments")
+                        .deleteOne({ id: commentId })];
             case 1:
-                comments = _a.sent();
-                commentIndex = comments.findIndex(function (comment) { return comment.id === commentId; });
-                if (commentIndex === -1) {
+                deleteResult = _a.sent();
+                if (deleteResult.deletedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Comment not found." })];
                 }
-                comments = comments.filter(function (comment) { return comment.id !== commentId; });
-                return [4 /*yield*/, database_1.db.writeDbFile("comments.json", comments)];
-            case 2:
-                _a.sent();
                 res.status(204).send();
                 return [2 /*return*/];
         }
@@ -115,46 +145,44 @@ router.delete("/:id", authMiddleware_1.authMiddleware, function (req, res) { ret
 }); });
 // Like a comment
 router.post("/like", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var commentId, comments, comment;
+    var commentId, updateResult, comment;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 commentId = req.body.commentId;
-                return [4 /*yield*/, database_1.db.readDbFile("comments.json")];
+                return [4 /*yield*/, database_1.db.collection("comments").updateOne({ id: commentId }, { $inc: { likes: 1 } } // Use MongoDB update with increment
+                    )];
             case 1:
-                comments = _a.sent();
-                comment = comments.find(function (comment) { return comment.id === commentId; });
-                if (!comment) {
+                updateResult = _a.sent();
+                if (updateResult.modifiedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Comment not found." })];
                 }
-                comment.likes += 1;
-                return [4 /*yield*/, database_1.db.writeDbFile("comments.json", comments)];
+                return [4 /*yield*/, database_1.db.collection("comments").findOne({ id: commentId })];
             case 2:
-                _a.sent();
-                res.json({ id: comment.id, likes: comment.likes });
+                comment = _a.sent();
+                res.json({ id: comment === null || comment === void 0 ? void 0 : comment.id, likes: comment === null || comment === void 0 ? void 0 : comment.likes });
                 return [2 /*return*/];
         }
     });
 }); });
 // Dislike a comment
 router.post("/dislike", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var commentId, comments, comment;
+    var commentId, updateResult, comment;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 commentId = req.body.commentId;
-                return [4 /*yield*/, database_1.db.readDbFile("comments.json")];
+                return [4 /*yield*/, database_1.db.collection("comments").updateOne({ id: commentId }, { $inc: { dislikes: 1 } } // Use MongoDB update with increment
+                    )];
             case 1:
-                comments = _a.sent();
-                comment = comments.find(function (comment) { return comment.id === commentId; });
-                if (!comment) {
+                updateResult = _a.sent();
+                if (updateResult.modifiedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Comment not found." })];
                 }
-                comment.dislikes += 1;
-                return [4 /*yield*/, database_1.db.writeDbFile("comments.json", comments)];
+                return [4 /*yield*/, database_1.db.collection("comments").findOne({ id: commentId })];
             case 2:
-                _a.sent();
-                res.json({ id: comment.id, dislikes: comment.dislikes });
+                comment = _a.sent();
+                res.json({ id: comment === null || comment === void 0 ? void 0 : comment.id, dislikes: comment === null || comment === void 0 ? void 0 : comment.dislikes });
                 return [2 /*return*/];
         }
     });

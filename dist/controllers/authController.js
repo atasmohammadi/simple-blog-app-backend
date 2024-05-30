@@ -68,12 +68,38 @@ var bcrypt_1 = __importDefault(require("bcrypt"));
 var database_1 = require("../models/database");
 var constants_1 = require("../constants");
 var router = express_1.default.Router();
+// Ensure users collection exists before using it
+function ensureUsersCollection() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!!database_1.db.collection("users")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, database_1.db.createCollection("users")];
+                case 1:
+                    _a.sent(); // Create collection if it doesn't exist
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    });
+}
+(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, ensureUsersCollection()];
+            case 1:
+                _a.sent(); // Call on startup
+                return [2 /*return*/];
+        }
+    });
+}); })();
 // Helper function to generate JWT token
 var generateToken = function (userId) {
     return jsonwebtoken_1.default.sign({ id: userId }, constants_1.SECRET_KEY, { expiresIn: "1h" });
 };
 router.post("/register", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, username, email, password, users, emailExists, hashedPassword, newUser, _, userWithoutPassword;
+    var _a, username, email, password, users, emailExists, hashedPassword, newUser, error_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -83,7 +109,7 @@ router.post("/register", function (req, res) { return __awaiter(void 0, void 0, 
                             .status(400)
                             .send({ message: "Username, email, and password are required." })];
                 }
-                return [4 /*yield*/, database_1.db.readDbFile("users.json")];
+                return [4 /*yield*/, database_1.db.collection("users").find({ email: email }).toArray()];
             case 1:
                 users = _b.sent();
                 emailExists = users.some(function (user) { return user.email === email; });
@@ -94,23 +120,30 @@ router.post("/register", function (req, res) { return __awaiter(void 0, void 0, 
             case 2:
                 hashedPassword = _b.sent();
                 newUser = {
-                    id: users.length + 1,
+                    id: users.length ? users[users.length - 1].id + 1 : 1,
                     username: username,
                     email: email,
                     password: hashedPassword,
                 };
-                users.push(newUser);
-                return [4 /*yield*/, database_1.db.writeDbFile("users.json", users)];
+                _b.label = 3;
             case 3:
-                _b.sent();
-                _ = newUser.password, userWithoutPassword = __rest(newUser, ["password"]);
-                res.json(userWithoutPassword);
-                return [2 /*return*/];
+                _b.trys.push([3, 5, , 6]);
+                return [4 /*yield*/, database_1.db.collection("users").insertOne(newUser)];
+            case 4:
+                _b.sent(); // Use MongoDB insert
+                res.json(newUser); // Return user without password
+                return [3 /*break*/, 6];
+            case 5:
+                error_1 = _b.sent();
+                console.error("Error registering user:", error_1);
+                res.status(500).send({ message: "Internal server error." });
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
     });
 }); });
 router.post("/login", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, email, password, users, user, isPasswordValid, token, _, userWithoutPassword;
+    var _a, email, password, user, isPasswordValid, token, _, userWithoutPassword;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -120,10 +153,9 @@ router.post("/login", function (req, res) { return __awaiter(void 0, void 0, voi
                             .status(400)
                             .send({ message: "Email and password are required." })];
                 }
-                return [4 /*yield*/, database_1.db.readDbFile("users.json")];
+                return [4 /*yield*/, database_1.db.collection("users").findOne({ email: email })];
             case 1:
-                users = _b.sent();
-                user = users.find(function (user) { return user.email === email; });
+                user = _b.sent();
                 if (!user) {
                     return [2 /*return*/, res.status(401).send({ message: "Invalid email or password." })];
                 }

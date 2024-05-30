@@ -44,12 +44,38 @@ var express_1 = __importDefault(require("express"));
 var database_1 = require("../models/database");
 var authMiddleware_1 = require("../middleware/authMiddleware");
 var router = express_1.default.Router();
+// Ensure posts collection exists before using it
+function ensurePostsCollection() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!!database_1.db.collection("posts")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, database_1.db.createCollection("posts")];
+                case 1:
+                    _a.sent(); // Create collection if it doesn't exist
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    });
+}
+(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, ensurePostsCollection()];
+            case 1:
+                _a.sent(); // Call on startup
+                return [2 /*return*/];
+        }
+    });
+}); })();
 // Fetch all posts
 router.get("/", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var posts;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, database_1.db.readDbFile("posts.json")];
+            case 0: return [4 /*yield*/, database_1.db.collection("posts").find().toArray()];
             case 1:
                 posts = _a.sent();
                 res.json(posts);
@@ -59,9 +85,10 @@ router.get("/", function (req, res) { return __awaiter(void 0, void 0, void 0, f
 }); });
 // Create a post
 router.post("/", authMiddleware_1.authMiddleware, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, author, title, text, posts, newPost;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var _a, author, title, text, newPost, error_1;
+    var _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 _a = req.body, author = _a.author, title = _a.title, text = _a.text;
                 if (!author || !title || !text) {
@@ -69,45 +96,47 @@ router.post("/", authMiddleware_1.authMiddleware, function (req, res) { return _
                             .status(400)
                             .send({ message: "Author, title, and text are required." })];
                 }
-                return [4 /*yield*/, database_1.db.readDbFile("posts.json")];
+                _b = {};
+                return [4 /*yield*/, database_1.db.collection("posts").countDocuments({})];
             case 1:
-                posts = _b.sent();
-                newPost = {
-                    id: posts.length + 1,
-                    author: author,
-                    title: title,
-                    text: text,
-                    date: new Date().toISOString(),
-                    likes: 0,
-                    dislikes: 0,
-                };
-                posts.push(newPost);
-                return [4 /*yield*/, database_1.db.writeDbFile("posts.json", posts)];
+                newPost = (_b.id = (_c.sent()) + 1,
+                    _b.author = author,
+                    _b.title = title,
+                    _b.text = text,
+                    _b.date = new Date().toISOString(),
+                    _b.likes = 0,
+                    _b.dislikes = 0,
+                    _b);
+                _c.label = 2;
             case 2:
-                _b.sent();
+                _c.trys.push([2, 4, , 5]);
+                return [4 /*yield*/, database_1.db.collection("posts").insertOne(newPost)];
+            case 3:
+                _c.sent(); // Use MongoDB insertOne
                 res.json(newPost);
-                return [2 /*return*/];
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _c.sent();
+                console.error("Error creating post:", error_1);
+                res.status(500).send({ message: "Internal server error." });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
     });
 }); });
 // Delete a post
 router.delete("/:id", authMiddleware_1.authMiddleware, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var postId, posts, postIndex;
+    var postId, deleteResult;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 postId = parseInt(req.params.id);
-                return [4 /*yield*/, database_1.db.readDbFile("posts.json")];
+                return [4 /*yield*/, database_1.db.collection("posts").deleteOne({ id: postId })];
             case 1:
-                posts = _a.sent();
-                postIndex = posts.findIndex(function (post) { return post.id === postId; });
-                if (postIndex === -1) {
+                deleteResult = _a.sent();
+                if (deleteResult.deletedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Post not found." })];
                 }
-                posts = posts.filter(function (post) { return post.id !== postId; });
-                return [4 /*yield*/, database_1.db.writeDbFile("posts.json", posts)];
-            case 2:
-                _a.sent();
                 res.status(204).send();
                 return [2 /*return*/];
         }
@@ -115,46 +144,44 @@ router.delete("/:id", authMiddleware_1.authMiddleware, function (req, res) { ret
 }); });
 // Like a post
 router.post("/like", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var postId, posts, post;
+    var postId, updateResult, post;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 postId = req.body.postId;
-                return [4 /*yield*/, database_1.db.readDbFile("posts.json")];
+                return [4 /*yield*/, database_1.db.collection("posts").updateOne({ id: postId }, { $inc: { likes: 1 } } // Use MongoDB update with increment
+                    )];
             case 1:
-                posts = _a.sent();
-                post = posts.find(function (post) { return post.id === postId; });
-                if (!post) {
+                updateResult = _a.sent();
+                if (updateResult.modifiedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Post not found." })];
                 }
-                post.likes += 1;
-                return [4 /*yield*/, database_1.db.writeDbFile("posts.json", posts)];
+                return [4 /*yield*/, database_1.db.collection("posts").findOne({ id: postId })];
             case 2:
-                _a.sent();
-                res.json({ id: post.id, likes: post.likes });
+                post = _a.sent();
+                res.json({ id: post === null || post === void 0 ? void 0 : post.id, likes: post === null || post === void 0 ? void 0 : post.likes });
                 return [2 /*return*/];
         }
     });
 }); });
 // Dislike a post
 router.post("/dislike", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var postId, posts, post;
+    var postId, updateResult, post;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 postId = req.body.postId;
-                return [4 /*yield*/, database_1.db.readDbFile("posts.json")];
+                return [4 /*yield*/, database_1.db.collection("posts").updateOne({ id: postId }, { $inc: { dislikes: 1 } } // Use MongoDB update with increment
+                    )];
             case 1:
-                posts = _a.sent();
-                post = posts.find(function (post) { return post.id === postId; });
-                if (!post) {
+                updateResult = _a.sent();
+                if (updateResult.modifiedCount === 0) {
                     return [2 /*return*/, res.status(404).send({ message: "Post not found." })];
                 }
-                post.dislikes += 1;
-                return [4 /*yield*/, database_1.db.writeDbFile("posts.json", posts)];
+                return [4 /*yield*/, database_1.db.collection("posts").findOne({ id: postId })];
             case 2:
-                _a.sent();
-                res.json({ id: post.id, dislikes: post.dislikes });
+                post = _a.sent();
+                res.json({ id: post === null || post === void 0 ? void 0 : post.id, dislikes: post === null || post === void 0 ? void 0 : post.dislikes });
                 return [2 /*return*/];
         }
     });

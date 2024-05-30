@@ -1,50 +1,19 @@
-import fs from "fs-extra";
-import path from "path";
+import { MongoClient } from "mongodb";
 
-const DATA_PATH = path.join(__dirname, "../data");
+const client = new MongoClient(process.env.MONGODB_URI as string);
 
-async function ensureDataDirExists() {
+async function connectToDb() {
   try {
-    await fs.ensureDir(DATA_PATH); // Create data directory if it doesn't exist
+    await client.connect();
+    console.log("Connected to MongoDB Atlas");
   } catch (error) {
-    // Ignore errors if directory already exists
-    if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
-      console.error("Error creating data directory:", error);
-      throw error;
-    }
+    console.error("Error connecting to MongoDB Atlas:", error);
+    process.exit(1); // Exit on connection failure
   }
 }
 
-async function readDbFile(filename: string) {
-  await ensureDataDirExists(); // Ensure data directory exists
-  const filePath = path.join(DATA_PATH, filename);
-  try {
-    const data = await fs.readJson(filePath);
-    return data;
-  } catch (error) {
-    // If file doesn't exist, create an empty file and return null
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      await fs.writeJson(filePath, {}, { spaces: 2 }); // Create empty file
-      return null;
-    } else {
-      console.error(`Error reading the database file: ${filename}`, error);
-      throw error;
-    }
-  }
-}
+export const db = client.db("your_database_name"); // Access the entire database
 
-async function writeDbFile(filename: string, data: any) {
-  await ensureDataDirExists(); // Ensure data directory exists
-  try {
-    const filePath = path.join(DATA_PATH, filename);
-    await fs.writeJson(filePath, data, { spaces: 2 });
-  } catch (error) {
-    console.error(`Error writing the database file: ${filename}`, error);
-    throw error;
-  }
-}
-
-export const db = {
-  readDbFile,
-  writeDbFile,
-};
+(async () => {
+  await connectToDb();
+})(); // Connect to DB on app startup

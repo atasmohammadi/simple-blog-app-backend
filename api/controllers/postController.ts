@@ -5,9 +5,20 @@ import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
+// Ensure posts collection exists before using it
+async function ensurePostsCollection() {
+  if (!db.collection("posts")) {
+    await db.createCollection("posts"); // Create collection if it doesn't exist
+  }
+}
+
+(async () => {
+  await ensurePostsCollection(); // Call on startup
+})();
+
 // Fetch all posts
 router.get("/", async (req, res) => {
-  const posts: Post[] = await db.readDbFile("posts.json");
+  const posts = await db.collection("posts").find().toArray(); // Use MongoDB find
   res.json(posts);
 });
 
@@ -20,9 +31,8 @@ router.post("/", authMiddleware, async (req, res) => {
       .send({ message: "Author, title, and text are required." });
   }
 
-  const posts: Post[] = await db.readDbFile("posts.json");
   const newPost: Post = {
-    id: posts.length + 1,
+    id: (await db.collection("posts").countDocuments({})) + 1, // Generate ID using count
     author,
     title,
     text,
@@ -30,48 +40,60 @@ router.post("/", authMiddleware, async (req, res) => {
     likes: 0,
     dislikes: 0,
   };
-  posts.push(newPost);
-  await db.writeDbFile("posts.json", posts);
-  res.json(newPost);
+
+  try {
+    await db.collection("posts").insertOne(newPost); // Use MongoDB insertOne
+    res.json(newPost);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).send({ message: "Internal server error." });
+  }
 });
 
 // Delete a post
 router.delete("/:id", authMiddleware, async (req, res) => {
   const postId = parseInt(req.params.id);
-  let posts: Post[] = await db.readDbFile("posts.json");
-  const postIndex = posts.findIndex((post) => post.id === postId);
-  if (postIndex === -1) {
+  const deleteResult = await db.collection("posts").deleteOne({ id: postId }); // Use MongoDB deleteOne
+
+  if (deleteResult.deletedCount === 0) {
     return res.status(404).send({ message: "Post not found." });
   }
-  posts = posts.filter((post) => post.id !== postId);
-  await db.writeDbFile("posts.json", posts);
+
   res.status(204).send();
 });
 
 // Like a post
 router.post("/like", async (req, res) => {
   const { postId } = req.body;
-  let posts: Post[] = await db.readDbFile("posts.json");
-  const post = posts.find((post) => post.id === postId);
-  if (!post) {
+
+  const updateResult = await db.collection("posts").updateOne(
+    { id: postId },
+    { $inc: { likes: 1 } } // Use MongoDB update with increment
+  );
+
+  if (updateResult.modifiedCount === 0) {
     return res.status(404).send({ message: "Post not found." });
   }
-  post.likes += 1;
-  await db.writeDbFile("posts.json", posts);
-  res.json({ id: post.id, likes: post.likes });
+
+  const post = await db.collection("posts").findOne({ id: postId }); // Fetch updated post
+  res.json({ id: post?.id, likes: post?.likes });
 });
 
 // Dislike a post
 router.post("/dislike", async (req, res) => {
   const { postId } = req.body;
-  let posts: Post[] = await db.readDbFile("posts.json");
-  const post = posts.find((post) => post.id === postId);
-  if (!post) {
+
+  const updateResult = await db.collection("posts").updateOne(
+    { id: postId },
+    { $inc: { dislikes: 1 } } // Use MongoDB update with increment
+  );
+
+  if (updateResult.modifiedCount === 0) {
     return res.status(404).send({ message: "Post not found." });
   }
-  post.dislikes += 1;
-  await db.writeDbFile("posts.json", posts);
-  res.json({ id: post.id, dislikes: post.dislikes });
+
+  const post = await db.collection("posts").findOne({ id: postId }); // Fetch updated post
+  res.json({ id: post?.id, dislikes: post?.dislikes });
 });
 
 export const postRoutes = router;

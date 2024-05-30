@@ -35,96 +35,40 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.db = void 0;
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
-var DATA_PATH = path_1.default.join(__dirname, "../data");
-function ensureDataDirExists() {
+var mongodb_1 = require("mongodb");
+var client = new mongodb_1.MongoClient(process.env.MONGODB_URI);
+function connectToDb() {
     return __awaiter(this, void 0, void 0, function () {
         var error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, fs_extra_1.default.ensureDir(DATA_PATH)];
+                    return [4 /*yield*/, client.connect()];
                 case 1:
-                    _a.sent(); // Create data directory if it doesn't exist
+                    _a.sent();
+                    console.log("Connected to MongoDB Atlas");
                     return [3 /*break*/, 3];
                 case 2:
                     error_1 = _a.sent();
-                    // Ignore errors if directory already exists
-                    if (error_1.code !== "EEXIST") {
-                        console.error("Error creating data directory:", error_1);
-                        throw error_1;
-                    }
+                    console.error("Error connecting to MongoDB Atlas:", error_1);
+                    process.exit(1); // Exit on connection failure
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
         });
     });
 }
-function readDbFile(filename) {
-    return __awaiter(this, void 0, void 0, function () {
-        var filePath, data, error_2;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, ensureDataDirExists()];
-                case 1:
-                    _a.sent(); // Ensure data directory exists
-                    filePath = path_1.default.join(DATA_PATH, filename);
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 8]);
-                    return [4 /*yield*/, fs_extra_1.default.readJson(filePath)];
-                case 3:
-                    data = _a.sent();
-                    return [2 /*return*/, data];
-                case 4:
-                    error_2 = _a.sent();
-                    if (!(error_2.code === "ENOENT")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, fs_extra_1.default.writeJson(filePath, {}, { spaces: 2 })];
-                case 5:
-                    _a.sent(); // Create empty file
-                    return [2 /*return*/, null];
-                case 6:
-                    console.error("Error reading the database file: ".concat(filename), error_2);
-                    throw error_2;
-                case 7: return [3 /*break*/, 8];
-                case 8: return [2 /*return*/];
-            }
-        });
+exports.db = client.db("your_database_name"); // Access the entire database
+(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, connectToDb()];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
     });
-}
-function writeDbFile(filename, data) {
-    return __awaiter(this, void 0, void 0, function () {
-        var filePath, error_3;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, ensureDataDirExists()];
-                case 1:
-                    _a.sent(); // Ensure data directory exists
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 5]);
-                    filePath = path_1.default.join(DATA_PATH, filename);
-                    return [4 /*yield*/, fs_extra_1.default.writeJson(filePath, data, { spaces: 2 })];
-                case 3:
-                    _a.sent();
-                    return [3 /*break*/, 5];
-                case 4:
-                    error_3 = _a.sent();
-                    console.error("Error writing the database file: ".concat(filename), error_3);
-                    throw error_3;
-                case 5: return [2 /*return*/];
-            }
-        });
-    });
-}
-exports.db = {
-    readDbFile: readDbFile,
-    writeDbFile: writeDbFile,
-};
+}); })(); // Connect to DB on app startup
