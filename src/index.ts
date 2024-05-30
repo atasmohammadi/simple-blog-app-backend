@@ -7,9 +7,10 @@ import { authRoutes } from "./controllers/authController";
 import { postRoutes } from "./controllers/postController";
 import { commentRoutes } from "./controllers/commentController";
 import { userRoutes } from "./controllers/userController";
+import { rootRoutes } from "./controllers/rootRouter";
 
 const app = express();
-const PORT = 3000;
+const PORT = 80;
 
 // Enable CORS for all requests
 const corsOptions = {
@@ -23,6 +24,7 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Define routes
+app.use("/", rootRoutes);
 app.use("/auth", authRoutes);
 app.use("/posts", postRoutes);
 app.use("/comments", commentRoutes);
