@@ -26,7 +26,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors());
+app.options("*", cors(corsOptions));
 app.use(bodyParser.json());
 
 // Define routes
