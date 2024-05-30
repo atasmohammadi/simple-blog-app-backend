@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -10,7 +12,7 @@ import { userRoutes } from "./controllers/userController";
 import { rootRoutes } from "./controllers/rootRouter";
 
 const app = express();
-const PORT = 80;
+const PORT = process.env.PORT || 80;
 
 // Enable CORS for all requests
 const corsOptions = {
