@@ -15,7 +15,11 @@ const PORT = process.env.PORT || 80;
 
 // Enable CORS for all requests
 const corsOptions = {
-  origin: "*", // Allow all origins
+  origin: [
+    "https://blog-ts-mui-frontend.vercel.app",
+    "https://blog-app-eta-gold.vercel.app",
+    "*",
+  ], // Allow all origins
   credentials: true, // Allow credentials
   allowedHeaders: "*", // Allow any headers
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Optional: Specify allowed methods
