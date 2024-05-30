@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES5",
     "module": "commonjs",
-    "rootDir": "./src",
-    "outDir": "./build",
+    "rootDir": "api",
+    "outDir": "./public",
     "esModuleInterop": true,
     "strict": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["api/**/*"],
   "exclude": ["node_modules"]
 }

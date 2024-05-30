@@ -2,12 +2,12 @@
   "name": "simple-blog-app-backend",
   "version": "0.0.1",
   "description": "A simple blog backend built with Node.js, Express, and TypeScript",
-  "main": "src/index.ts",
+  "main": "index.ts",
   "scripts": {
     "prestart": "yarn build",
-    "start": "node src/index.ts",
+    "start": "node public/index.js",
     "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only public/index.js"
   },
   "author": "",
   "license": "ISC",
